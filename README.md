@@ -13,6 +13,14 @@ For example,
 - [Packer](https://www.packer.io/)
 - etc.
 
+## Install
+
+Place a `aswrap` command to your PATH and set an executable flag.
+
+```console
+$ curl -so path/to/aswrap https://raw.githubusercontent.com/fujiwara/aswrap/master/aswrap && chmod +x path/to/aswrap
+```
+
 ## Usage
 
 ```ini
