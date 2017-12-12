@@ -24,6 +24,8 @@ $ curl -so path/to/aswrap https://raw.githubusercontent.com/fujiwara/aswrap/mast
 ## Usage
 
 ```ini
+# ~/.aws/credentials
+
 [my-profile]
 aws_access_key_id=XXX
 aws_secret_access_key=YYY
