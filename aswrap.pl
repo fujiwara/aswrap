@@ -16,7 +16,7 @@ sub set_env {
     my $section = $config->{$profile} or return;
     my $src     = $section->{source_profile} or return;
     my $role    = $section->{role_arn} or return;
-    my $output  = qx{aws --profile "$src" sts assume-role --role-arn "$role" --role-session-name temp};
+    my $output  = qx{aws --output json --profile "$src" sts assume-role --role-arn "$role" --role-session-name temp};
     chomp $output;
     my $res = decode_json($output);
     if (my $cred = $res->{Credentials}) {
