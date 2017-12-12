@@ -500,7 +500,7 @@ use warnings;
 use Config::Tiny;
 use JSON::PP qw/ decode_json /;
 
-my $profile = $ENV{'AWS_PROFILE'} || $ENV{'AWS_DEFAULT_PROFILE'};
+my $profile = $ENV{AWS_PROFILE} || $ENV{AWS_DEFAULT_PROFILE};
 set_env($profile) if defined $profile;
 exec @ARGV;
 
