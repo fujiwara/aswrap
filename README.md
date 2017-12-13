@@ -82,7 +82,8 @@ Temporary credentials has expiration time (about 1 hour).
 
 ## LICENSE
 
-MIT License
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 ## Author
 
