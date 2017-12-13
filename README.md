@@ -44,7 +44,7 @@ $ AWS_PROFILE=foo aswrap some_command [arg1 arg2...]
 
 `aswrap` works as below.
 
-1. Find `AWS_PROFILE` section in $HOME/.aws/credentials .
+1. Find `AWS_PROFILE` section in ~/.aws/credentials and ~/.aws/config .
 2. Call `aws sts assume-role` to a get temporary credentials.
 3. Set the credentilas to environment variables.
    - `AWS_ACCESS_KEY_ID`

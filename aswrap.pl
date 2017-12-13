@@ -19,10 +19,12 @@ for my $key (qw/AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_RE
 
 sub set_env {
     my $profile = shift;
-    my $config  = Config::Tiny->read("$ENV{HOME}/.aws/credentials") or return;
-    my $section = $config->{$profile} or return;
-    my $src     = $section->{source_profile} or return;
-    my $role    = $section->{role_arn} or return;
+    my $section
+        = find_profile("$ENV{HOME}/.aws/credentials", $profile)
+        || find_profile("$ENV{HOME}/.aws/config", "profile $profile")
+        || return;
+    my $src     = $section->{source_profile};
+    my $role    = $section->{role_arn};
     my $session = "aswrap-session-" . time();
     my $output  = qx{aws --output json --profile "$src" sts assume-role --role-arn "$role" --role-session-name "$session"};
     chomp $output;
@@ -36,4 +38,13 @@ sub set_env {
     }
     $ENV{AWS_REGION} = $section->{region} if defined $section->{region};
     return;
+}
+
+sub find_profile {
+    my ($path, $profile) = @_;
+    my $config  = Config::Tiny->read($path) or return;
+    my $section = $config->{$profile} or return;
+    $section->{source_profile} or return;
+    $section->{role_arn} or return;
+    return $section;
 }
