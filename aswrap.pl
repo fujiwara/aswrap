@@ -26,7 +26,8 @@ sub set_env {
     my $src     = $section->{source_profile};
     my $role    = $section->{role_arn};
     my $session = "aswrap-session-" . time();
-    my $output  = qx{aws --output json --profile "$src" sts assume-role --role-arn "$role" --role-session-name "$session"};
+    my $mfa     = read_token($section->{mfa_serial}) || '';
+    my $output  = qx{aws --output json --profile "$src" sts assume-role --role-arn "$role" --role-session-name "$session" $mfa};
     chomp $output;
     my $res = decode_json($output);
     if (my $cred = $res->{Credentials}) {
@@ -47,4 +48,16 @@ sub find_profile {
     $section->{source_profile} or return;
     $section->{role_arn} or return;
     return $section;
+}
+
+sub read_token {
+    my $mfa_serial = shift;
+    return unless $mfa_serial;
+
+    print STDERR "MFA Code: ";
+    my $token = <STDIN>;
+    chomp($token);
+    return unless $token =~ /^(\d{6})$/xms;
+
+    return qq{--serial-number "$mfa_serial" --token-code "$token"};
 }
