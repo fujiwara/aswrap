@@ -18,7 +18,7 @@ For example,
 Place a `aswrap` command to your PATH and set an executable flag.
 
 ```console
-$ curl -Lso path/to/aswrap https://github.com/fujiwara/aswrap/releases/download/v0.0.2/aswrap && chmod +x path/to/aswrap
+$ curl -Lso path/to/aswrap https://github.com/fujiwara/aswrap/releases/download/v0.0.3/aswrap && chmod +x path/to/aswrap
 ```
 
 ## Usage
