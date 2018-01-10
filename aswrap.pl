@@ -55,7 +55,9 @@ sub read_token {
     return unless $mfa_serial;
 
     print STDERR "MFA Code: ";
+    system "stty", "-echo";  # echo back off
     my $token = <STDIN>;
+    system "stty", "echo";   # echo back on
     chomp($token);
     return unless $token =~ /^(\d{6})$/xms;
 
