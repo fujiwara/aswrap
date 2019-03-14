@@ -21,6 +21,12 @@ Place a `aswrap` command to your PATH and set an executable flag.
 $ curl -Lso path/to/aswrap https://github.com/fujiwara/aswrap/releases/download/v0.0.3/aswrap && chmod +x path/to/aswrap
 ```
 
+Or use Homebrew.
+
+```console
+$ brew install fujiwara/tap/aswrap
+```
+
 ## Usage
 
 ```ini
