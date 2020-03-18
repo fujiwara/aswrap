@@ -23,11 +23,14 @@ sub set_env {
         = find_profile("$ENV{HOME}/.aws/credentials", $profile)
         || find_profile("$ENV{HOME}/.aws/config", "profile $profile")
         || return;
-    my $src     = $section->{source_profile};
+    my $src_profile_opt = "";
+    if (my $src = $section->{source_profile}) {
+        $src_profile_opt = qq{--profile "$src"};
+    }
     my $role    = $section->{role_arn};
     my $session = "aswrap-session-" . time();
     my $mfa     = read_token($section->{mfa_serial}) || '';
-    my $output  = qx{aws --output json --profile "$src" sts assume-role --role-arn "$role" --role-session-name "$session" $mfa};
+    my $output  = qx{aws --output json $src_profile_opt sts assume-role --role-arn "$role" --role-session-name "$session" $mfa};
     chomp $output;
     my $res = decode_json($output);
     if (my $cred = $res->{Credentials}) {
@@ -44,8 +47,7 @@ sub set_env {
 sub find_profile {
     my ($path, $profile) = @_;
     my $config  = Config::Tiny->read($path) or return;
-    my $section = $config->{$profile} or return;
-    $section->{source_profile} or return;
+    my $section = $config->{$profile}       or return;
     $section->{role_arn} or return;
     return $section;
 }
