@@ -6,7 +6,7 @@ test:
 	perl -wc aswrap.pl
 
 clean:
-	rm -f aswrap fatlib
+	rm -rf aswrap fatlib
 
 install: aswrap
 	install aswrap ~/bin
