@@ -1,4 +1,4 @@
-requires 'perl', '5.016000';
+requires 'perl', '5.014000';
 
 requires 'Config::Tiny';
 requires 'JSON::PP';
