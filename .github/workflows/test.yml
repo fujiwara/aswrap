@@ -18,9 +18,10 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
-      - name: install fatpack
+      - name: install modules
         run: |
           cpanm App::FatPacker
+          cpanm --installdeps .
       - name: build and test
         run: |
           make clean
