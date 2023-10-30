@@ -5,9 +5,12 @@ use warnings;
 
 use Config::Tiny;
 use JSON::PP qw/ decode_json /;
+our $DEBUG = $ENV{ASWRAP_DEBUG} || 0;
 
 my $profile = $ENV{AWS_PROFILE} || $ENV{AWS_DEFAULT_PROFILE};
-set_env($profile) if defined $profile;
+if (defined $profile) {
+    set_env_assume_role($profile) || set_env_sso($profile);
+}
 if (@ARGV) {
     exec @ARGV;
 }
@@ -17,11 +20,12 @@ for my $key (qw/AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_RE
     }
 }
 
-sub set_env {
+sub set_env_assume_role {
     my $profile = shift;
+    debug("profile: $profile");
     my $section
-        = find_profile("$ENV{HOME}/.aws/credentials", $profile)
-        || find_profile("$ENV{HOME}/.aws/config", "profile $profile")
+        = find_role_profile("$ENV{HOME}/.aws/credentials", $profile)
+        || find_role_profile("$ENV{HOME}/.aws/config", "profile $profile")
         || return;
     my $src_profile_opt = "";
     if (my $src = $section->{source_profile}) {
@@ -41,14 +45,16 @@ sub set_env {
         $ENV{AWS_SESSION_TOKEN}     = $cred->{SessionToken};
     }
     $ENV{AWS_REGION} = $section->{region} if defined $section->{region};
-    return;
+    return 1;
 }
 
-sub find_profile {
+sub find_role_profile {
     my ($path, $profile) = @_;
+    debug("finding role section [$profile] in $path");
     my $config  = Config::Tiny->read($path) or return;
     my $section = $config->{$profile}       or return;
     $section->{role_arn} or return;
+    debug("found role profile:", $section->{role_arn});
     return $section;
 }
 
@@ -64,4 +70,56 @@ sub read_token {
     return unless $token =~ /^(\d{6})$/xms;
 
     return qq{--serial-number "$mfa_serial" --token-code "$token"};
+}
+
+sub set_env_sso {
+    my $profile = shift;
+    my $section
+        = find_sso_profile("$ENV{HOME}/.aws/credentials", $profile)
+        || find_sso_profile("$ENV{HOME}/.aws/config", "profile $profile")
+        || return;
+    if (my $sso_session = $section->{sso_session}) {
+        # TODO
+    }
+    require Digest::SHA;
+    my $sso_start_url = $section->{sso_start_url};
+    my $sha1 = Digest::SHA::sha1_hex($sso_start_url);
+    my $cache_file = "$ENV{HOME}/.aws/sso/cache/${sha1}.json";
+    open my $fh, '<', $cache_file or die "Cannot open SSO cache file for $sso_start_url: $!";
+    my $src = do { local $/; <$fh> };
+    close $fh;
+    my $cache = decode_json($src);
+    my $token = $cache->{accessToken};
+    my $sso_account_id = $section->{sso_account_id};
+    my $sso_role_name = $section->{sso_role_name};
+    my $sso_region = $section->{sso_region};
+
+    my $output  = qx{aws --region "$sso_region" --output json sso get-role-credentials --account-id "$sso_account_id" --role-name "$sso_role_name" --access-token "$token"};
+    chomp $output;
+    my $res = decode_json($output);
+    if (my $cred = $res->{roleCredentials}) {
+        delete $ENV{AWS_PROFILE};
+        delete $ENV{AWS_DEFAULT_PROFILE};
+        $ENV{AWS_ACCESS_KEY_ID}     = $cred->{accessKeyId};
+        $ENV{AWS_SECRET_ACCESS_KEY} = $cred->{secretAccessKey};
+        $ENV{AWS_SESSION_TOKEN}     = $cred->{sessionToken};
+    }
+    $ENV{AWS_REGION} = $section->{region} if defined $section->{region};
+    return 1;
+}
+
+sub find_sso_profile {
+    my ($path, $profile) = @_;
+    debug("finding sso section [$profile] in $path");
+    my $config  = Config::Tiny->read($path) or return;
+    my $section = $config->{$profile}       or return;
+    $section->{sso_start_url} or return;
+    debug("found sso profile:", $section->{sso_start_url});
+    return $section;
+}
+
+sub debug {
+    my @msg = @_;
+    return unless $DEBUG;
+    print STDERR "[debug] @msg\n";
 }

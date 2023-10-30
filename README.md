@@ -4,7 +4,7 @@ AWS assume role credential wrapper.
 
 ## Description
 
-aswrap is useful for some commands which couldn't resolve an assume role credentials in ~/.aws/credentials.
+aswrap is useful for some commands which couldn't resolve an assume role credentials in ~/.aws/credentials and IAM Identity Center credentials cache.
 
 For example,
 
@@ -29,6 +29,7 @@ $ brew install fujiwara/tap/aswrap
 
 ## Usage
 
+for Assume Role.
 ```ini
 # ~/.aws/credentials
 
@@ -42,6 +43,19 @@ source_profile=my-profile
 role_arn=arn:aws:iam::999999999999:role/MyRole
 ```
 
+for IAM Identity Center.
+
+```ini
+# ~/.aws/config
+
+[profile foo]
+sso_start_url = https://example.awsapps.com/start
+sso_region = ap-northeast-1
+sso_account_id = 123456789012
+sso_role_name = myrole
+region = ap-northeast-1
+```
+
 ### As command wrapper
 
 ```console
@@ -51,7 +65,9 @@ $ AWS_PROFILE=foo aswrap some_command [arg1 arg2...]
 `aswrap` works as below.
 
 1. Find `AWS_PROFILE` section in ~/.aws/credentials and ~/.aws/config .
-2. Call `aws sts assume-role` to a get temporary credentials.
+2.
+   - (For assume role) Call `aws sts assume-role` to a get temporary credentials.
+   - (For IAM Identity Center) Call `aws sso get-role-credentials` to a get temporary credentials.
 3. Set the credentilas to environment variables.
    - `AWS_ACCESS_KEY_ID`
    - `AWS_SECRET_ACCESS_KEY`
@@ -94,4 +110,3 @@ it under the same terms as Perl itself.
 ## Author
 
 Copyright (c) 2017 FUJIWARA Shunichiro
-

@@ -1,0 +1,30 @@
+name: test
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        perl:
+          - "5.36.1"
+          - "5.14.4"
+    name: Perl ${{ matrix.perl }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup perl
+        uses: shogo82148/actions-setup-perl@v1
+        with:
+          perl-version: ${{ matrix.perl }}
+      - name: install modules
+        run: |
+          cpanm App::FatPacker
+          cpanm --installdeps .
+      - name: build and test
+        run: |
+          make clean
+          make test
+          make aswrap
+          perl -wc aswrap
