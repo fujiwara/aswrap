@@ -7,7 +7,9 @@ use Config::Tiny;
 use JSON::PP qw/ decode_json /;
 
 my $profile = $ENV{AWS_PROFILE} || $ENV{AWS_DEFAULT_PROFILE};
-set_env($profile) if defined $profile;
+if (defined $profile) {
+    set_env_assume_role($profile); # || set_env_sso($profile);
+}
 if (@ARGV) {
     exec @ARGV;
 }
@@ -17,11 +19,11 @@ for my $key (qw/AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_RE
     }
 }
 
-sub set_env {
+sub set_env_assume_role {
     my $profile = shift;
     my $section
-        = find_profile("$ENV{HOME}/.aws/credentials", $profile)
-        || find_profile("$ENV{HOME}/.aws/config", "profile $profile")
+        = find_role_profile("$ENV{HOME}/.aws/credentials", $profile)
+        || find_role_profile("$ENV{HOME}/.aws/config", "profile $profile")
         || return;
     my $src_profile_opt = "";
     if (my $src = $section->{source_profile}) {
@@ -41,10 +43,10 @@ sub set_env {
         $ENV{AWS_SESSION_TOKEN}     = $cred->{SessionToken};
     }
     $ENV{AWS_REGION} = $section->{region} if defined $section->{region};
-    return;
+    return 1;
 }
 
-sub find_profile {
+sub find_role_profile {
     my ($path, $profile) = @_;
     my $config  = Config::Tiny->read($path) or return;
     my $section = $config->{$profile}       or return;
