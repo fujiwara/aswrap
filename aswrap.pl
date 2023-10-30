@@ -5,6 +5,7 @@ use warnings;
 
 use Config::Tiny;
 use JSON::PP qw/ decode_json /;
+our $DEBUG = $ENV{ASWRAP_DEBUG} || 0;
 
 my $profile = $ENV{AWS_PROFILE} || $ENV{AWS_DEFAULT_PROFILE};
 if (defined $profile) {
@@ -21,6 +22,7 @@ for my $key (qw/AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN AWS_RE
 
 sub set_env_assume_role {
     my $profile = shift;
+    debug("profile: $profile");
     my $section
         = find_role_profile("$ENV{HOME}/.aws/credentials", $profile)
         || find_role_profile("$ENV{HOME}/.aws/config", "profile $profile")
@@ -48,9 +50,11 @@ sub set_env_assume_role {
 
 sub find_role_profile {
     my ($path, $profile) = @_;
+    debug("finding role section [$profile] in $path");
     my $config  = Config::Tiny->read($path) or return;
     my $section = $config->{$profile}       or return;
     $section->{role_arn} or return;
+    debug("found role profile:", $section->{role_arn});
     return $section;
 }
 
@@ -106,8 +110,16 @@ sub set_env_sso {
 
 sub find_sso_profile {
     my ($path, $profile) = @_;
+    debug("finding sso section [$profile] in $path");
     my $config  = Config::Tiny->read($path) or return;
     my $section = $config->{$profile}       or return;
     $section->{sso_start_url} or return;
+    debug("found sso profile:", $section->{sso_start_url});
     return $section;
+}
+
+sub debug {
+    my @msg = @_;
+    return unless $DEBUG;
+    print STDERR "[debug] @msg\n";
 }
